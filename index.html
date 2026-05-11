@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Time Wasted</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0a0a;
+      --bg2:       #111111;
+      --bg3:       #1a1a1a;
+      --border:    #2a2a2a;
+      --accent:    #c8f135;
+      --accent2:   #ff4d4d;
+      --text:      #e8e8e0;
+      --muted:     #888882;
+      --font-head: 'Syne', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* noise overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    /* ── HEADER ── */
+    header {
+      padding: 60px 0 48px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 56px;
+    }
+
+    .logo {
+      font-family: var(--font-head);
+      font-size: clamp(2.2rem, 6vw, 4rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      color: var(--text);
+    }
+
+    .logo span {
+      color: var(--accent);
+    }
+
+    .tagline {
+      margin-top: 12px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    /* ── SECTIONS ── */
+    section {
+      margin-bottom: 56px;
+      opacity: 0;
+      transform: translateY(18px);
+      animation: fadeUp 0.5s ease forwards;
+    }
+
+    section:nth-child(1) { animation-delay: 0.05s; }
+    section:nth-child(2) { animation-delay: 0.15s; }
+    section:nth-child(3) { animation-delay: 0.25s; }
+    section:nth-child(4) { animation-delay: 0.35s; }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: none; }
+    }
+
+    .section-label {
+      font-size: 0.85rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── INPUT CARD ── */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 28px 32px;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      min-width: 160px;
+    }
+
+    label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    select {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      padding: 12px 14px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    select option { background: var(--bg3); }
+
+    .btn {
+      background: var(--accent);
+      color: #0a0a0a;
+      border: none;
+      border-radius: 2px;
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 13px 28px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+      align-self: flex-end;
+    }
+
+    .btn:hover { background: #d9ff3f; }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+    }
+
+    .btn-ghost:hover { background: var(--bg3); border-color: var(--accent); color: var(--accent); }
+
+    /* ── CHART ── */
+    .chart-wrap {
+      position: relative;
+      height: 300px;
+    }
+
+    /* ── ALTERNATIVES GRID ── */
+    .alt-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .alt-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 20px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .alt-card:hover { border-color: var(--accent); background: var(--bg3); }
+
+    .alt-icon {
+      font-size: 1.4rem;
+      margin-bottom: 10px;
+    }
+
+    .alt-title {
+      font-family: var(--font-head);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .alt-detail {
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .alt-highlight {
+      color: var(--accent);
+      font-weight: 400;
+    }
+
+    /* ── COMBOBOX ── */
+    .combo-wrap { position: relative; }
+    .combo-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--bg3);
+      border: 1px solid var(--accent);
+      border-top: none;
+      border-radius: 0 0 2px 2px;
+      max-height: 220px;
+      overflow-y: auto;
+      z-index: 200;
+      display: none;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    .combo-dropdown.open { display: block; }
+    .combo-option {
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s;
+    }
+    .combo-option:hover { background: var(--bg2); color: var(--accent); }
+    .combo-option.muted { color: var(--muted); cursor: default; }
+
+    /* ── SEARCH ── */
+    .search-wrap {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .search-wrap input {
+      padding-left: 40px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 0.9rem;
+      pointer-events: none;
+    }
+
+    #search-results {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    /* ── GOAL SECTION ── */
+    .goal-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    /* ── RESPONSIVE ── */
+
+    /* Tablet */
+    @media (max-width: 768px) {
+      header { padding: 40px 0 32px; margin-bottom: 40px; }
+      section { margin-bottom: 40px; }
+      .card { padding: 20px 20px; }
+      .stats-row { gap: 24px; }
+      .chart-wrap { height: 240px; }
+      .alt-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+      #search-results { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+    }
+
+    /* Phone */
+    @media (max-width: 540px) {
+      .wrap { padding: 0 16px 60px; }
+      header { padding: 28px 0 24px; margin-bottom: 28px; }
+      section { margin-bottom: 28px; }
+      .card { padding: 16px; }
+      .goal-inputs { grid-template-columns: 1fr; }
+      .input-row { flex-direction: column; align-items: stretch; }
+      .btn { width: 100%; text-align: center; }
+      .stats-row { gap: 20px; }
+      .chart-wrap { height: 200px; }
+      .alt-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+      #search-results { grid-template-columns: 1fr; }
+      .milestone-row { flex-direction: column; gap: 4px; }
+      .milestone-value { text-align: right; }
+      .landing-tag { letter-spacing: 0.08em; font-size: 0.75rem; }
+      .landing-logo { display: flex; flex-direction: column; align-items: center; line-height: 0.95; }
+      .btn-enter { padding: 12px 28px; }
+      .nav-logo { display: none; }
+    }
+
+    /* Small phones */
+    @media (max-width: 380px) {
+      .alt-grid { grid-template-columns: 1fr; }
+      .landing-clock { font-size: clamp(1.2rem, 8vw, 1.8rem); }
+      .section-label { font-size: 0.62rem; }
+    }
+
+    /* ── GOAL RESULT ── */
+    .goal-result {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 2px;
+      padding: 24px 28px;
+      display: none;
+    }
+
+    .goal-result.visible { display: block; }
+
+    .goal-result-title {
+      font-family: var(--font-head);
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--accent);
+    }
+
+    .milestone-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+
+    .milestone-row:last-child { border-bottom: none; }
+
+    .milestone-label { color: var(--muted); }
+    .milestone-value { color: var(--text); font-weight: 400; }
+    .milestone-weeks { color: var(--accent); font-family: var(--font-head); font-size: 1rem; font-weight: 700; }
+
+    /* ── HIDDEN ── */
+    .hidden { display: none; }
+
+    /* ── BIG NUMBER ── */
+    .big-stat {
+      font-family: var(--font-head);
+      font-size: clamp(2.5rem, 8vw, 5rem);
+      font-weight: 800;
+      line-height: 1;
+      color: var(--accent2);
+      letter-spacing: -0.03em;
+    }
+
+    .big-stat-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    .stats-row {
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+
+    /* ── LANDING ── */
+    #landing {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    #landing.out {
+      opacity: 0;
+      transform: translateY(-20px);
+      pointer-events: none;
+    }
+    .landing-logo {
+      font-family: var(--font-head);
+      font-size: clamp(3rem, 12vw, 7rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+    .landing-logo span { color: var(--accent); }
+    .landing-tag {
+      font-size: 0.82rem;
+      color: var(--muted);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin-bottom: 48px;
+    }
+    .btn-enter {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 14px 40px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: background 0.2s, color 0.2s, transform 0.1s;
+    }
+    .btn-enter:hover { background: var(--accent); color: #0a0a0a; }
+    .btn-enter:active { transform: scale(0.97); }
+    .cursor {
+      display: inline-block;
+      width: 3px;
+      height: 0.85em;
+      background: var(--accent);
+      margin-left: 4px;
+      vertical-align: middle;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(10,10,10,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      margin: 0 -24px 48px;
+    }
+    .nav-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      height: 48px;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+      overflow-x: auto;
+      scrollbar-width: none;
+      min-width: 0;
+    }
+    .nav-links::-webkit-scrollbar { display: none; }
+    .nav-logo {
+      font-family: var(--font-head);
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-right: 16px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      transition: color 0.15s;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-logo:hover { color: var(--accent); }
+    .nav-logo.active { color: var(--accent); }
+    .nav-link {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 6px 12px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: color 0.15s, background 0.15s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .nav-link:hover { color: var(--text); background: var(--bg3); }
+    .nav-link.active { color: var(--accent); }
+    .nav-link.locked { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+
+    /* ── OPTIONAL TAG ── */
+    .optional-tag {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 1px 5px;
+      margin-left: 6px;
+      vertical-align: middle;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── COMPARE SECTION ── */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 540px) { .compare-grid { grid-template-columns: 1fr; } }
+    .compare-bar-wrap { margin-top: 20px; }
+    .compare-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .compare-bar-track {
+      height: 8px;
+      background: var(--bg3);
+      border-radius: 4px;
+      overflow: visible;
+      position: relative;
+      margin-bottom: 10px;
+    }
+    .compare-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.9s cubic-bezier(0.16,1,0.3,1);
+    }
+    .compare-bar-marker {
+      position: absolute;
+      top: -4px;
+      width: 2px;
+      height: 16px;
+      background: var(--muted);
+      border-radius: 1px;
+    }
+    .compare-bar-marker-label {
+      position: absolute;
+      top: 18px;
+      font-size: 0.62rem;
+      color: var(--muted);
+      white-space: nowrap;
+      transform: translateX(-50%);
+    }
+
+    /* ── SHARE BUTTON ── */
+    .share-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      padding: 10px 18px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      margin-top: 8px;
+    }
+    .share-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* scroll offset for sticky nav */
+    #section-1, #section-2, #section-3, #section-4, #section-5 {
+      scroll-margin-top: 64px;
+    }
+
+    /* ── PIE CHART 3D ── */
+    #pieChart {
+      transform: perspective(700px) rotateX(18deg);
+      filter: drop-shadow(0 18px 32px rgba(0,0,0,0.7));
+    }
+
+    /* ── PIE LEGEND ── */
+    .pie-legend {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .pie-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pie-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .pie-legend-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      flex: 1;
+    }
+    .pie-legend-hrs {
+      font-size: 0.72rem;
+      color: var(--text);
+    }
+
+    /* ── LIGHT MODE ── */
+    body.light {
+      --bg:     #d6d6d0;
+      --bg2:    #ccccc6;
+      --bg3:    #c2c2bc;
+      --border: #aaaaa4;
+      --text:   #1a1a1a;
+      --muted:  #555550;
+      --accent: #5c8000;
+      --accent2:#cc2200;
+    }
+    body.light nav { background: rgba(214,214,208,0.94); }
+    body.light #pieChart { filter: drop-shadow(0 12px 24px rgba(0,0,0,0.15)); }
+    body.light .landing-clock { text-shadow: 0 0 14px rgba(92,128,0,0.4); }
+
+    /* ── TOGGLE BUTTONS ── */
+    .header-controls {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .toggle-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      padding: 4px 10px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+      line-height: 1.6;
+    }
+    .toggle-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ── GUIDE ── */
+    .guide {
+      margin-top: 20px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .guide summary {
+      padding: 11px 14px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: color 0.15s;
+    }
+    .guide summary::-webkit-details-marker { display: none; }
+    .guide summary::after { content: '›'; margin-left: auto; transition: transform 0.2s; }
+    .guide[open] summary::after { transform: rotate(90deg); }
+    .guide[open] summary { color: var(--text); border-bottom: 1px solid var(--border); }
+    .guide-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 0; }
+    .guide-row {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.78rem;
+    }
+    .guide-row:last-child { border-bottom: none; }
+    .guide-os { color: var(--accent); font-family: var(--font-head); font-weight: 700; min-width: 72px; flex-shrink: 0; }
+    .guide-step { color: var(--muted); }
+    .guide-step span { color: var(--text); }
+
+    /* ── DIGITAL CLOCK ── */
+    .landing-clock {
+      font-family: var(--font-mono);
+      font-size: clamp(1.6rem, 5vw, 2.8rem);
+      font-weight: 300;
+      color: var(--accent);
+      letter-spacing: 0.18em;
+      text-shadow: 0 0 18px #c8f13588, 0 0 40px #c8f13540;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .clock-sep {
+      animation: blink 1s step-end infinite;
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LANDING ── -->
+<div id="landing">
+  <div class="landing-logo">Time<span>Wasted</span></div>
+  <div class="landing-clock" id="landing-clock">
+    <span id="clock-h">00</span><span class="clock-sep">:</span><span id="clock-m">00</span><span class="clock-sep">:</span><span id="clock-s">00</span>
+  </div>
+  <p class="landing-tag" data-i18n="tagline">See what your screen time really cost you</p>
+  <button class="btn-enter" onclick="enterSite()" data-i18n="enter">Enter ↓</button>
+</div>
+
+<!-- ── MAIN SITE ── -->
+<nav id="main-nav" style="display:none">
+  <div class="nav-inner">
+    <div class="nav-links">
+      <button class="nav-logo active" onclick="navTo('section-1')">Time<span>Wasted</span></button>
+      <button class="nav-link locked" onclick="navTo('section-2')" data-i18n="nav1">02 Your year</button>
+      <button class="nav-link locked" onclick="navTo('section-3')" data-i18n="nav2">03 How you compare</button>
+      <button class="nav-link locked" onclick="navTo('section-4')" data-i18n="nav3">04 What you missed</button>
+      <button class="nav-link locked" onclick="navTo('section-5')" data-i18n="nav4">05 Set a goal</button>
+    </div>
+    <div class="header-controls">
+      <button class="toggle-btn" id="theme-btn" onclick="toggleTheme()">☀️</button>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap" id="main-wrap" style="display:none">
+
+  <header>
+    <div class="logo">Time<span>Wasted</span></div>
+    <p class="tagline" data-i18n="tagline">See what your screen time really cost you</p>
+  </header>
+
+  <!-- ── SECTION 1 ── -->
+  <section id="section-1">
+    <p class="section-label" data-i18n="s1label">01 — Your screen time</p>
+    <div class="card">
+      <div class="input-row">
+        <div class="input-group">
+          <label for="hours-input" data-i18n="hoursInputLabel">Hours per week on social media</label>
+          <input type="number" id="hours-input" placeholder="e.g. 14" min="0" max="168"
+            onkeydown="if(event.key==='Enter') calculate()"/>
+        </div>
+        <button class="btn" id="calc-btn" onclick="calculate()" data-i18n="calcBtn">Calculate</button>
+      </div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+        <div class="input-group">
+          <label for="salary-input">Your hourly wage <span class="optional-tag">optional</span></label>
+          <input type="number" id="salary-input" placeholder="€/hr — leave empty for min. wage (12.41)" min="0" step="0.5"/>
+        </div>
+      </div>
+      <details class="guide">
+        <summary data-i18n="guideTitle">📱 Where to find your screen time</summary>
+        <div class="guide-body">
+          <div class="guide-row"><span class="guide-os">iPhone</span><span class="guide-step" data-i18n="guideIos">Settings → <span>Screen Time</span> → See All Activity</span></div>
+          <div class="guide-row"><span class="guide-os">Android</span><span class="guide-step" data-i18n="guideAndroid">Settings → <span>Digital Wellbeing</span> → Dashboard</span></div>
+          <div class="guide-row"><span class="guide-os">Samsung</span><span class="guide-step" data-i18n="guideSamsung">Settings → <span>Digital Wellbeing</span> → Your goals</span></div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ── SECTION 2: YEAR PIE ── -->
+  <section id="pie-section" class="hidden">
+  <span id="section-2"></span>
+    <p class="section-label">02 — Your year in hours <span style="font-size:0.6rem;color:var(--muted);letter-spacing:0.08em;">(ø based on average adult routines)</span></p>
+    <div class="card">
+      <div id="free-time-ratio" style="margin-bottom:20px;"></div>
+      <div class="chart-wrap" style="height:320px;">
+        <canvas id="pieChart"></canvas>
+      </div>
+      <div class="pie-legend" id="pie-legend" style="margin-top:20px;"></div>
+    </div>
+  </section>
+
+  <!-- ── SECTION 3: COMPARE ── -->
+  <section id="compare-section" class="hidden">
+  <span id="section-3"></span>
+    <p class="section-label">03 — How you compare</p>
+    <div id="compare-content"></div>
+  </section>
+
+  <!-- ── SECTION 4 ── -->
+  <section id="results-section" class="hidden">
+  <span id="section-4"></span>
+    <p class="section-label">04 — What you could have done instead</p>
+
+    <div class="stats-row">
+      <div>
+        <div class="big-stat" id="stat-hours">0h</div>
+        <div class="big-stat-label" data-i18n="statWeek">wasted per week</div>
+      </div>
+      <div>
+        <div class="big-stat" id="stat-year" style="color: var(--accent)">0h</div>
+        <div class="big-stat-label" data-i18n="statYear">wasted per year</div>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <canvas id="myChart"></canvas>
+    </div>
+
+    <div class="alt-grid" id="alt-grid" style="margin-top: 24px;"></div>
+  </section>
+
+  <!-- ── SECTION 5: SET A GOAL ── -->
+  <section id="goal-section" class="hidden">
+  <span id="section-5"></span>
+    <p class="section-label">05 — Set a learning goal</p>
+    <div class="card">
+      <div class="goal-inputs">
+        <div class="input-group">
+          <label for="goal-skill-input" data-i18n="skillLabel">What do you want to learn?</label>
+          <div class="combo-wrap">
+            <input type="text" id="goal-skill-input" placeholder="— choose or type a skill —" autocomplete="off"/>
+            <input type="hidden" id="goal-skill"/>
+            <div class="combo-dropdown" id="goal-skill-dropdown"></div>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="goal-hours">Hours per week you'd invest</label>
+          <input type="number" id="goal-hours" placeholder="e.g. 5" min="0.5" max="40" step="0.5" onkeydown="if(event.key==='Enter') calcGoal()"/>
+        </div>
+      </div>
+      <button class="btn" onclick="calcGoal()" data-i18n="goalBtn">Show my progress timeline</button>
+
+      <div class="goal-result" id="goal-result" style="margin-top: 24px;">
+        <div class="goal-result-title" id="goal-title"></div>
+        <div id="goal-milestones"></div>
+      </div>
+    </div>
+  </section>
+
+
+</div>
+
+<script>
+  // ── DATA ──
+  const alternatives = [
+    {
+      icon: '🎸', title: 'Learn guitar',
+      levels: [
+        { label: 'First 3 chords', hrs: 5 },
+        { label: 'Play your first full song', hrs: 20 },
+        { label: 'Barre chords & solos', hrs: 80 },
+        { label: 'Play confidently at a party', hrs: 150 },
+      ],
+      messages: [
+        'You could have strummed your first 3 chords and already impressed your friends',
+        'You could have learned your first full song from start to finish',
+        'You could have mastered barre chords and started playing solos',
+        'You could have played guitar confidently at a party',
+      ]
+    },
+    {
+      icon: '🗣️', title: 'Learn Spanish',
+      levels: [
+        { label: 'Basic greetings', hrs: 10 },
+        { label: 'Hold a simple conversation', hrs: 50 },
+        { label: 'Watch shows with subtitles', hrs: 150 },
+        { label: 'Fluent in daily life', hrs: 300 },
+      ],
+      messages: [
+        "You'd know enough Spanish to survive a holiday without Google Translate",
+        'You could have held a real conversation with a native speaker',
+        'You could have watched Spanish shows and understood most of it',
+        "You'd be fluent enough to live and work in a Spanish-speaking country",
+      ]
+    },
+    {
+      icon: '💻', title: 'Learn to code',
+      levels: [
+        { label: 'Understand variables & loops', hrs: 10 },
+        { label: 'Build a simple webpage', hrs: 40 },
+        { label: 'Build a full web app', hrs: 150 },
+        { label: 'Job-ready developer', hrs: 500 },
+      ],
+      projects: [
+        { hrs: 10,  label: 'a calculator' },
+        { hrs: 25,  label: 'a personal website' },
+        { hrs: 60,  label: 'a to-do app' },
+        { hrs: 150, label: 'a full web app' },
+      ]
+    },
+    {
+      icon: '🏃', title: 'Run a 5k',
+      levels: [
+        { label: 'Run 1km without stopping', hrs: 3 },
+        { label: 'Run a 5k', hrs: 15 },
+        { label: 'Run a 10k', hrs: 35 },
+        { label: 'Half marathon', hrs: 80 },
+      ],
+      messages: [
+        "You'd have been able to run 1km without stopping",
+        'You could have crossed the finish line of your first 5k race',
+        'You could have completed a full 10k run',
+        'You could have run a half marathon — 21 kilometres',
+      ]
+    },
+    {
+      icon: '📚', title: 'Read books',
+      levels: [
+        { label: '1 book', hrs: 8 },
+        { label: '5 books', hrs: 40 },
+        { label: '10 books', hrs: 80 },
+        { label: '20 books', hrs: 160 },
+      ],
+      isBooks: true,
+      minsPerPage: 2,
+      pagesPerBook: 300,
+    },
+    {
+      icon: '🎨', title: 'Learn drawing',
+      levels: [
+        { label: 'Basic shapes & proportions', hrs: 10 },
+        { label: 'Draw recognisable portraits', hrs: 50 },
+        { label: 'Develop a personal style', hrs: 200 },
+        { label: 'Professional quality', hrs: 500 },
+      ],
+      messages: [
+        "You'd have mastered basic shapes and proportions",
+        'You could have drawn portraits people would actually recognise',
+        "You'd have developed your own unique drawing style",
+        'Your work would be at professional quality',
+      ]
+    },
+    {
+      icon: '🧘', title: 'Daily meditation',
+      levels: [
+        { label: 'Sit still for 10 minutes', hrs: 2 },
+        { label: 'Consistent daily habit', hrs: 15 },
+        { label: 'Notice real stress reduction', hrs: 40 },
+        { label: 'Deep focus state', hrs: 100 },
+      ],
+      messages: [
+        'You could have learned to sit still and clear your mind for 10 minutes',
+        "You'd have built a consistent daily meditation practice",
+        "You'd have felt real, measurable reductions in daily stress",
+        'You could have reached a deep, sustained daily focus state',
+      ]
+    },
+    {
+      icon: '🍳', title: 'Master cooking',
+      levels: [
+        { label: 'Cook 5 basic meals', hrs: 10 },
+        { label: 'Cook without recipes', hrs: 40 },
+        { label: 'Host a dinner party', hrs: 80 },
+        { label: 'Restaurant-level dishes', hrs: 200 },
+      ],
+      messages: [
+        "You could have mastered 5 solid meals you'd actually be proud of",
+        "You'd have learned to cook freely without looking anything up",
+        'You could have hosted an impressive dinner party',
+        "Your cooking would rival what you'd pay €20 a plate for",
+      ]
+    },
+    {
+      icon: '✈️', title: 'All-inclusive holidays',
+      isVacation: true,
+      avgCost: 1100,
+      levels: [],
+    },
+  ];
+
+  const skillData = {
+    spanish:      { name: 'Spanish',       milestones: [{ label: 'Basic greetings & phrases', hrs: 10 }, { label: 'Hold a simple conversation', hrs: 50 }, { label: 'Watch shows with subtitles', hrs: 150 }, { label: 'Fluent in daily life', hrs: 300 }] },
+    french:       { name: 'French',        milestones: [{ label: 'Basic greetings & phrases', hrs: 10 }, { label: 'Order food, ask directions', hrs: 50 }, { label: 'Understand native speakers', hrs: 200 }, { label: 'Fluent in daily life', hrs: 350 }] },
+    german:       { name: 'German',        milestones: [{ label: 'Basic greetings & phrases', hrs: 15 }, { label: 'Introduce yourself', hrs: 60 }, { label: 'Understand news headlines', hrs: 250 }, { label: 'Fluent in daily life', hrs: 400 }] },
+    japanese:     { name: 'Japanese',      milestones: [{ label: 'Hiragana & Katakana', hrs: 20 }, { label: 'Basic conversation', hrs: 100 }, { label: '500 kanji', hrs: 300 }, { label: 'Daily fluency', hrs: 800 }] },
+    italian:      { name: 'Italian',       milestones: [{ label: 'Basic greetings & phrases', hrs: 10 }, { label: 'Order food & navigate', hrs: 40 }, { label: 'Watch Italian films', hrs: 180 }, { label: 'Fluent in daily life', hrs: 320 }] },
+    guitar:       { name: 'Guitar',        milestones: [{ label: 'First 3 chords', hrs: 5 }, { label: 'Play your first full song', hrs: 20 }, { label: 'Barre chords & soloing basics', hrs: 80 }, { label: 'Play confidently at a party', hrs: 150 }] },
+    piano:        { name: 'Piano',         milestones: [{ label: 'Both hands independently', hrs: 10 }, { label: 'Simple songs with both hands', hrs: 30 }, { label: 'Intermediate pieces', hrs: 120 }, { label: 'Play for an audience', hrs: 300 }] },
+    drums:        { name: 'Drums',         milestones: [{ label: 'Basic beat & coordination', hrs: 5 }, { label: 'Play along to simple songs', hrs: 25 }, { label: 'Consistent tempo & fills', hrs: 80 }, { label: 'Play in a band', hrs: 200 }] },
+    coding:       { name: 'Coding',        milestones: [{ label: 'Understand variables & loops', hrs: 10 }, { label: 'Build a simple webpage', hrs: 40 }, { label: 'Build a full web app', hrs: 150 }, { label: 'Job-ready developer', hrs: 500 }] },
+    drawing:      { name: 'Drawing',       milestones: [{ label: 'Basic shapes & proportions', hrs: 10 }, { label: 'Draw recognisable portraits', hrs: 50 }, { label: 'Develop a personal style', hrs: 200 }, { label: 'Professional quality', hrs: 500 }] },
+    photography:  { name: 'Photography',   milestones: [{ label: 'Understand your camera settings', hrs: 5 }, { label: 'Take consistently good photos', hrs: 30 }, { label: 'Edit photos professionally', hrs: 80 }, { label: 'Shoot paid commissions', hrs: 200 }] },
+    videoediting: { name: 'Video editing', milestones: [{ label: 'Cut and export a basic video', hrs: 5 }, { label: 'Add transitions, titles & music', hrs: 20 }, { label: 'Colour grade & mix audio', hrs: 60 }, { label: 'Edit professional-level content', hrs: 150 }] },
+    running:      { name: 'Running',       milestones: [{ label: 'Run 1km without stopping', hrs: 3 }, { label: 'Run 5km', hrs: 15 }, { label: 'Run 10km', hrs: 35 }, { label: 'Half marathon', hrs: 80 }] },
+    swimming:     { name: 'Swimming',      milestones: [{ label: 'Swim 25m front crawl', hrs: 5 }, { label: 'Swim 500m continuously', hrs: 20 }, { label: 'Learn all 4 strokes', hrs: 60 }, { label: 'Swim 1km open water', hrs: 120 }] },
+    yoga:         { name: 'Yoga',          milestones: [{ label: 'Complete a basic class', hrs: 3 }, { label: 'Hold intermediate poses', hrs: 20 }, { label: 'Consistent daily practice', hrs: 60 }, { label: 'Teach a beginner class', hrs: 200 }] },
+    meditation:   { name: 'Meditation',    milestones: [{ label: 'Sit still for 10 minutes', hrs: 2 }, { label: 'Consistent daily habit', hrs: 15 }, { label: 'Notice real stress reduction', hrs: 40 }, { label: 'Deep focus state', hrs: 100 }] },
+    cooking:      { name: 'Cooking',       milestones: [{ label: 'Cook 5 basic meals', hrs: 10 }, { label: 'Cook without recipes', hrs: 40 }, { label: 'Host a dinner party', hrs: 80 }, { label: 'Restaurant-level dishes', hrs: 200 }] },
+    chess:        { name: 'Chess',         milestones: [{ label: 'Know all the rules', hrs: 2 }, { label: 'Beat casual players', hrs: 20 }, { label: 'Reach 1000 ELO', hrs: 100 }, { label: 'Reach 1500 ELO', hrs: 400 }] },
+    writing:      { name: 'Writing',       milestones: [{ label: 'Write consistently every day', hrs: 10 }, { label: 'Finish a short story', hrs: 30 }, { label: 'Complete a novella', hrs: 150 }, { label: 'Finish a full novel', hrs: 400 }] },
+    investing:    { name: 'Investing',     milestones: [{ label: 'Understand stocks & ETFs', hrs: 5 }, { label: 'Build a diversified portfolio', hrs: 20 }, { label: 'Analyse companies independently', hrs: 60 }, { label: 'Build a long-term strategy', hrs: 150 }] },
+    football:     { name: 'Football',      proHrsPerWeek: 35, milestones: [{ label: 'Control the ball comfortably', hrs: 20 }, { label: 'Play in a casual team', hrs: 100 }, { label: 'Compete in amateur leagues', hrs: 500 }, { label: 'Semi-professional level', hrs: 2000 }] },
+    basketball:   { name: 'Basketball',    proHrsPerWeek: 30, milestones: [{ label: 'Dribble & shoot basics', hrs: 15 }, { label: 'Play pickup games confidently', hrs: 80 }, { label: 'Compete in amateur leagues', hrs: 400 }, { label: 'Semi-professional level', hrs: 1800 }] },
+    tennis:       { name: 'Tennis',        proHrsPerWeek: 30, milestones: [{ label: 'Keep a rally going', hrs: 20 }, { label: 'Win casual matches', hrs: 100 }, { label: 'Compete in club tournaments', hrs: 500 }, { label: 'National amateur level', hrs: 2000 }] },
+    boxing:       { name: 'Boxing',        proHrsPerWeek: 35, milestones: [{ label: 'Basic stance & jab-cross', hrs: 10 }, { label: 'Spar confidently', hrs: 60 }, { label: 'Win amateur bouts', hrs: 300 }, { label: 'Semi-professional level', hrs: 1500 }] },
+    cycling:      { name: 'Cycling',       proHrsPerWeek: 28, milestones: [{ label: 'Complete a 30km ride', hrs: 10 }, { label: 'Ride 100km (century)', hrs: 60 }, { label: 'Complete a sportive race', hrs: 200 }, { label: 'Compete at amateur level', hrs: 800 }] },
+    weightlifting:{ name: 'Weightlifting', proHrsPerWeek: 12, milestones: [{ label: 'Learn the basic lifts safely', hrs: 15 }, { label: 'Add 20kg to your lifts', hrs: 100 }, { label: 'Compete in local meets', hrs: 400 }, { label: 'National amateur level', hrs: 1500 }] },
+    mma:          { name: 'MMA',           proHrsPerWeek: 25, milestones: [{ label: 'Learn basic striking & grappling', hrs: 30 }, { label: 'Spar across disciplines', hrs: 150 }, { label: 'Win amateur fights', hrs: 600 }, { label: 'Semi-professional level', hrs: 2000 }] },
+    volleyball:   { name: 'Volleyball',    proHrsPerWeek: 20, milestones: [{ label: 'Serve & pass basics', hrs: 15 }, { label: 'Play in a casual team', hrs: 80 }, { label: 'Compete in amateur leagues', hrs: 400 }, { label: 'Semi-professional level', hrs: 1500 }] },
+    golf:         { name: 'Golf',          proHrsPerWeek: 40, milestones: [{ label: 'Hit the ball consistently', hrs: 20 }, { label: 'Play 18 holes without embarrassment', hrs: 100 }, { label: 'Break 90 strokes', hrs: 400 }, { label: 'Break 80 — scratch golfer', hrs: 1500 }] },
+  };
+
+  const searchPool = Object.entries(skillData).map(([k, v]) => ({ key: k, name: v.name }));
+
+  let chartInstance = null;
+  let pieChartInstance = null;
+  let weeklyHours = 0;
+  let currentYearly = 0;
+  let currentMoney = 0;
+  let statsObserver = null;
+
+  const MINDESTLOHN = 12.41; // €/hr Germany 2024
+
+  // ── CALCULATE ──
+  function calculate() {
+    const val = parseFloat(document.getElementById('hours-input').value);
+    if (!val || val <= 0) return shake('hours-input');
+    weeklyHours = val;
+    const yearly = val * 52;
+    currentYearly = yearly;
+    const salaryVal = parseFloat(document.getElementById('salary-input').value);
+    const wage = (salaryVal && salaryVal > 0) ? salaryVal : MINDESTLOHN;
+    const money = Math.round(yearly * wage);
+    currentMoney = money;
+
+    document.getElementById('stat-hours').textContent = val + 'h';
+    document.getElementById('stat-year').textContent = yearly + 'h';
+
+    // money stat card – add if not exists
+    let moneyEl = document.getElementById('stat-money-wrap');
+    if (!moneyEl) {
+      moneyEl = document.createElement('div');
+      moneyEl.id = 'stat-money-wrap';
+      document.querySelector('.stats-row').appendChild(moneyEl);
+    }
+    const moneyStatEl = document.createElement('div');
+    moneyStatEl.className = 'big-stat';
+    moneyStatEl.style.color = '#ff9f43';
+    const moneyLabelEl = document.createElement('div');
+    moneyLabelEl.className = 'big-stat-label';
+    moneyLabelEl.textContent = wage === MINDESTLOHN ? 'you could have earned (min. wage)' : 'you could have earned';
+    moneyStatEl.textContent = money.toLocaleString('de-DE') + '€';
+    moneyEl.innerHTML = '';
+    moneyEl.appendChild(moneyStatEl);
+    moneyEl.appendChild(moneyLabelEl);
+
+    // chart: exclude vacation block (no level data)
+    const chartAlts = alternatives.filter(a => !a.isVacation);
+    const labels = chartAlts.map(a => a.title);
+    const topHrs = chartAlts.map(a => a.levels[a.levels.length - 1].hrs);
+    const data = chartAlts.map((a, i) => Math.min(Math.round((yearly / topHrs[i]) * 100), 100));
+
+    if (chartInstance) chartInstance.destroy();
+    const ctx = document.getElementById('myChart').getContext('2d');
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Progress towards mastery (%)',
+          data,
+          backgroundColor: data.map(d => d >= 100 ? '#c8f135' : d >= 50 ? '#c8f13599' : '#c8f13533'),
+          borderColor: '#c8f135',
+          borderWidth: 1,
+          borderRadius: 2,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const a = chartAlts[ctx.dataIndex];
+                const bestLevel = getBestLevel(a, yearly);
+                return ` ${ctx.raw}% — you'd have reached "${bestLevel}"`;
+              }
+            },
+            backgroundColor: '#1a1a1a',
+            titleColor: '#e8e8e0',
+            bodyColor: '#c8f135',
+            borderColor: '#2a2a2a',
+            borderWidth: 1,
+          }
+        },
+        scales: {
+          x: {
+            max: 100,
+            ticks: { color: '#555550', font: { family: 'DM Mono', size: 11 }, callback: v => v + '%' },
+            grid: { color: '#1e1e1e' },
+          },
+          y: {
+            ticks: { color: '#e8e8e0', font: { family: 'DM Mono', size: 12 } },
+            grid: { display: false },
+          }
+        }
+      }
+    });
+
+    // alt cards
+    const grid = document.getElementById('alt-grid');
+    grid.innerHTML = alternatives.map(a => {
+      let detail = '';
+
+      if (a.isVacation) {
+        const vacations = Math.floor(money / a.avgCost);
+        detail = vacations > 0
+          ? `You could have taken <span class="alt-highlight">${vacations} all-inclusive holiday${vacations !== 1 ? 's' : ''}</span> — based on an average of €${a.avgCost.toLocaleString('de-DE')} per week`
+          : `You\'re just under the budget for a full holiday — but almost there`;
+      } else if (a.isBooks) {
+        const totalMins = yearly * 60;
+        const pages = Math.floor(totalMins / a.minsPerPage);
+        const books = Math.floor(pages / a.pagesPerBook);
+        detail = `That's <span class="alt-highlight">${pages.toLocaleString()} pages</span> — roughly <span class="alt-highlight">${books} books</span> (avg. 300 pages). You'd have read them cover to cover.`;
+      } else if (a.projects) {
+        const doableProjects = a.projects.filter(p => p.hrs <= yearly);
+        const best = doableProjects[doableProjects.length - 1];
+        detail = best
+          ? `You could have built <span class="alt-highlight">${best.label}</span> and more — well on your way to a dev career`
+          : `You'd have learned the fundamentals — variables, loops, and your first webpage`;
+      } else {
+        const idx = getBestLevelIndex(a, yearly);
+        detail = `<span class="alt-highlight">${a.messages[idx]}</span>`;
+      }
+
+      return `
+        <div class="alt-card">
+          <div class="alt-icon">${a.icon}</div>
+          <div class="alt-title">${a.title}</div>
+          <div class="alt-detail">${detail}</div>
+        </div>`;
+    }).join('');
+
+    drawPieChart(yearly);
+    drawComparison(val, money);
+    document.querySelectorAll('.nav-link.locked').forEach(b => b.classList.remove('locked'));
+    show('pie-section');
+    show('compare-section');
+    show('results-section');
+    show('goal-section');
+  }
+
+  function drawPieChart(yearly) {
+    const YEAR = 8760;
+    const social = Math.min(Math.round(yearly), YEAR - 3000);
+    const segments = [
+      { label: 'Sleep',         hrs: 2920, color: '#4a90d9' },
+      { label: 'Work / Study',  hrs: 1820, color: '#7d7dff' },
+      { label: 'Eating',        hrs: 548,  color: '#f0a500' },
+      { label: 'Personal care', hrs: 365,  color: '#c67fd4' },
+      { label: 'Commuting',     hrs: 260,  color: '#666660' },
+      { label: 'Social media',  hrs: social, color: '#ff4d4d' },
+      { label: 'Free time',     hrs: Math.max(0, YEAR - 2920 - 1820 - 548 - 365 - 260 - social), color: '#50c878' },
+    ];
+
+    if (pieChartInstance) pieChartInstance.destroy();
+    const ctx = document.getElementById('pieChart').getContext('2d');
+    pieChartInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: segments.map(s => s.label),
+        datasets: [{
+          data: segments.map(s => s.hrs),
+          backgroundColor: segments.map(s => s.color),
+          borderColor: '#0a0a0a',
+          borderWidth: 3,
+          borderRadius: 8,
+          hoverOffset: 14,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '62%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const pct = ((ctx.raw / YEAR) * 100).toFixed(1);
+                return ` ${ctx.raw.toLocaleString()}h — ${pct}% of the year`;
+              }
+            },
+            backgroundColor: '#1a1a1a',
+            titleColor: '#e8e8e0',
+            bodyColor: '#c8f135',
+            borderColor: '#2a2a2a',
+            borderWidth: 1,
+          }
+        }
+      }
+    });
+
+    const freeTime = Math.max(0, YEAR - 2920 - 1820 - 548 - 365 - 260 - social);
+    const freeTimePct = freeTime + social > 0 ? Math.round((social / (freeTime + social)) * 100) : 0;
+
+    document.getElementById('free-time-ratio').innerHTML = `
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:16px 0;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-family:var(--font-head);font-size:clamp(2rem,7vw,3.5rem);font-weight:800;line-height:1;color:var(--accent2);">${freeTimePct}%</div>
+          <div style="font-size:0.72rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:4px;">of your free time on social media</div>
+        </div>
+        <div style="flex:1;min-width:160px;font-size:0.78rem;color:var(--muted);line-height:1.6;">
+          You have roughly <span style="color:var(--text);">${(freeTime + social).toLocaleString()}h</span> of free time per year.
+          <span style="color:var(--accent2);">${social.toLocaleString()}h</span> of that goes to social media —
+          leaving only <span style="color:var(--accent);">${freeTime.toLocaleString()}h</span> truly for yourself.
+        </div>
+      </div>`;
+
+    const avgMarker = `<span style="font-size:0.62rem;color:var(--border);margin-left:4px;">ø</span>`;
+    document.getElementById('pie-legend').innerHTML =
+      `<div style="columns:2;column-gap:20px;">` +
+      segments.map(s => {
+        const pct = ((s.hrs / YEAR) * 100).toFixed(1);
+        const isAvg = s.label !== 'Social media';
+        const highlight = s.label === 'Social media' ? `color:var(--accent2);` : '';
+        return `<div class="pie-legend-item" style="break-inside:avoid;margin-bottom:10px;">
+          <span class="pie-dot" style="background:${s.color}"></span>
+          <span class="pie-legend-label" style="${highlight}">${s.label}${isAvg ? avgMarker : ''}</span>
+        </div>`;
+      }).join('') +
+      `</div><div style="font-size:0.65rem;color:var(--muted);margin-top:12px;text-align:right;">ø = estimated average for a working adult</div>`;
+  }
+
+  function drawComparison(weeklyHrs, money) {
+    const AVG = 17;
+    const diff = weeklyHrs - AVG;
+    const above = diff > 0;
+    const pct = Math.round(Math.abs(diff) / AVG * 100);
+    const color = above ? 'var(--accent2)' : 'var(--accent)';
+    const yearly = weeklyHrs * 52;
+    const yearlyAvg = AVG * 52;
+    const yearlyDiff = yearly - yearlyAvg;
+    const max = Math.max(weeklyHrs, AVG) * 1.15;
+    const userPct = (weeklyHrs / max * 100).toFixed(1);
+    const avgPct  = (AVG / max * 100).toFixed(1);
+    const maxY = Math.max(yearly, yearlyAvg) * 1.15;
+    const userYPct = (yearly / maxY * 100).toFixed(1);
+    const avgYPct  = (yearlyAvg / maxY * 100).toFixed(1);
+    const verdict = above
+      ? `You scroll <strong style="color:var(--accent2)">${diff}h more per week</strong> than the average person — that's <strong style="color:var(--accent2)">${diff * 52}h extra per year.</strong>`
+      : `You scroll <strong style="color:var(--accent)">${Math.abs(diff)}h less per week</strong> than the average person. You're doing better than most.`;
+
+    document.getElementById('compare-content').innerHTML = `
+      <div class="card">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;text-align:center;">
+          <div style="padding:16px;background:var(--bg3);border-radius:2px;border:1px solid var(--border);">
+            <div style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:8px;">Your usage</div>
+            <div style="font-family:var(--font-head);font-size:1.8rem;font-weight:800;color:${color};">${weeklyHrs}h</div>
+            <div style="font-size:0.7rem;color:var(--muted);margin-top:2px;">per week</div>
+          </div>
+          <div style="padding:16px;background:var(--bg3);border-radius:2px;border:1px solid var(--border);">
+            <div style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:8px;">Global average</div>
+            <div style="font-family:var(--font-head);font-size:1.8rem;font-weight:800;color:var(--text);">${AVG}h</div>
+            <div style="font-size:0.7rem;color:var(--muted);margin-top:2px;">per week</div>
+          </div>
+          <div style="padding:16px;background:var(--bg3);border-radius:2px;border:1px solid var(--border);">
+            <div style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:8px;">Difference</div>
+            <div style="font-family:var(--font-head);font-size:1.8rem;font-weight:800;color:${color};">${above ? '+' : '-'}${Math.abs(diff)}h</div>
+            <div style="font-size:0.7rem;color:${color};margin-top:2px;">${pct}% ${above ? 'above' : 'below'} avg</div>
+          </div>
+        </div>
+        <div style="margin-bottom:20px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;">Per week</span>
+            <div style="flex:1;height:1px;background:var(--border);"></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+            <span style="font-size:0.72rem;color:var(--muted);width:52px;flex-shrink:0;">You</span>
+            <div style="flex:1;height:10px;background:var(--bg3);border-radius:4px;overflow:hidden;">
+              <div style="height:100%;width:${userPct}%;background:${color};border-radius:4px;transition:width 0.9s cubic-bezier(0.16,1,0.3,1);"></div>
+            </div>
+            <span style="font-size:0.72rem;color:${color};width:32px;text-align:right;">${weeklyHrs}h</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:0.72rem;color:var(--muted);width:52px;flex-shrink:0;">Average</span>
+            <div style="flex:1;height:10px;background:var(--bg3);border-radius:4px;overflow:hidden;">
+              <div style="height:100%;width:${avgPct}%;background:var(--muted);border-radius:4px;transition:width 0.9s cubic-bezier(0.16,1,0.3,1);"></div>
+            </div>
+            <span style="font-size:0.72rem;color:var(--muted);width:32px;text-align:right;">${AVG}h</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;margin-top:4px;">
+          <span style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;">Per year</span>
+          <div style="flex:1;height:1px;background:var(--border);"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+          <span style="font-size:0.72rem;color:var(--muted);width:52px;flex-shrink:0;">You</span>
+          <div style="flex:1;height:10px;background:var(--bg3);border-radius:4px;overflow:hidden;">
+            <div style="height:100%;width:${userYPct}%;background:${color};border-radius:4px;transition:width 0.9s cubic-bezier(0.16,1,0.3,1);"></div>
+          </div>
+          <span style="font-size:0.72rem;color:${color};width:40px;text-align:right;">${yearly}h</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+          <span style="font-size:0.72rem;color:var(--muted);width:52px;flex-shrink:0;">Average</span>
+          <div style="flex:1;height:10px;background:var(--bg3);border-radius:4px;overflow:hidden;">
+            <div style="height:100%;width:${avgYPct}%;background:var(--muted);border-radius:4px;transition:width 0.9s cubic-bezier(0.16,1,0.3,1);"></div>
+          </div>
+          <span style="font-size:0.72rem;color:var(--muted);width:40px;text-align:right;">${yearlyAvg}h</span>
+        </div>
+        <p style="font-size:0.82rem;color:var(--muted);line-height:1.7;margin-bottom:16px;">${verdict}</p>
+        <button class="share-btn" onclick="shareStats(${weeklyHrs}, ${money})">📤 Share your stats</button>
+      </div>`;
+  }
+
+  function shareStats(hrs, money) {
+    const yearly = hrs * 52;
+    const text = `I spend ${hrs}h/week on social media — that's ${yearly}h a year and ~€${money.toLocaleString()} I could have earned. See what YOU could have done instead 👇`;
+    if (navigator.share) {
+      navigator.share({ title: 'TimeWasted', text, url: window.location.href }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('.share-btn');
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✓ Copied to clipboard!';
+        btn.style.color = 'var(--accent)';
+        btn.style.borderColor = 'var(--accent)';
+        setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
+      });
+    }
+  }
+
+  function getBestLevel(alt, hrs) {
+    let best = alt.levels[0].label;
+    for (const lvl of alt.levels) {
+      if (hrs >= lvl.hrs) best = lvl.label;
+    }
+    return best;
+  }
+
+  function getBestLevelIndex(alt, hrs) {
+    let idx = 0;
+    for (let i = 0; i < alt.levels.length; i++) {
+      if (hrs >= alt.levels[i].hrs) idx = i;
+    }
+    return idx;
+  }
+
+  // ── SEARCH ──
+  function searchSkill() {
+    const q = document.getElementById('search-input').value.toLowerCase().trim();
+    const out = document.getElementById('search-results');
+    if (!q) { out.innerHTML = ''; return; }
+    if (weeklyHours === 0) { out.innerHTML = '<p style="color:var(--muted);font-size:0.8rem;">Enter your screen time above first.</p>'; return; }
+
+    const matches = Object.entries(skillData).filter(([k, v]) => v.name.toLowerCase().includes(q) || k.includes(q));
+    if (!matches.length) { out.innerHTML = '<p style="color:var(--muted);font-size:0.8rem;">No skill found — try guitar, coding, Spanish…</p>'; return; }
+
+    const yearly = weeklyHours * 52;
+    out.innerHTML = matches.map(([k, v]) => {
+      const first = v.milestones[0];
+      const last = v.milestones[v.milestones.length - 1];
+      const weeksToFirst = Math.ceil(first.hrs / weeklyHours);
+      return `
+        <div class="alt-card">
+          <div class="alt-title">${v.name}</div>
+          <div class="alt-detail" style="margin-top:6px;">With your current screen time hours you could reach <span class="alt-highlight">"${first.label}"</span> in just <span class="alt-highlight">${weeksToFirst} week${weeksToFirst !== 1 ? 's' : ''}</span>.</div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── GOAL CALC ──
+  function calcGoal() {
+    const skill = document.getElementById('goal-skill').value;
+    const hrs = parseFloat(document.getElementById('goal-hours').value);
+    if (!skill) return shake('goal-skill-input');
+    if (!hrs || hrs <= 0) return shake('goal-hours');
+
+    const data = skillData[skill];
+    document.getElementById('goal-title').textContent = `Your ${data.name} journey`;
+
+    const rows = data.milestones.map(m => {
+      const weeks = Math.ceil(m.hrs / hrs);
+      const months = (weeks / 4.3).toFixed(1);
+      return `
+        <div class="milestone-row">
+          <span class="milestone-label">${m.label}</span>
+          <span class="milestone-value">
+            <span class="milestone-weeks">${weeks}w</span>
+            &nbsp;<span style="color:var(--muted);font-size:0.75rem">(~${months} months)</span>
+          </span>
+        </div>`;
+    }).join('');
+
+    let proNote = '';
+    if (data.proHrsPerWeek) {
+      const pct = Math.round((hrs / data.proHrsPerWeek) * 100);
+      proNote = `<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);font-size:0.78rem;color:var(--muted);">
+        Pro ${data.name} athletes train <span style="color:var(--accent)">${data.proHrsPerWeek}h/week</span> —
+        you're investing <span style="color:var(--accent)">${hrs}h/week</span>
+        <span style="color:var(--muted)">(${pct}% of a pro's workload)</span>
+      </div>`;
+    }
+    document.getElementById('goal-milestones').innerHTML = rows + proNote;
+    document.getElementById('goal-result').classList.add('visible');
+  }
+
+  // ── HELPERS ──
+  function show(id) {
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  function shake(id) {
+    const el = document.getElementById(id);
+    el.style.borderColor = 'var(--accent2)';
+    el.animate([{ transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'none' }], { duration: 250 });
+    setTimeout(() => el.style.borderColor = '', 1000);
+  }
+
+  // ── TRANSLATIONS ──
+  const T = {
+    en: {
+      tagline: 'See what your screen time really cost you',
+      enter: 'Enter ↓',
+      nav0: '01 Screen time', nav1: '02 Your year', nav2: '03 How you compare', nav3: '04 What you missed', nav4: '05 Set a goal',
+      s1label: '01 — Your screen time',
+      hoursInputLabel: 'Hours per week on social media',
+      calcBtn: 'Calculate',
+      guideTitle: '📱 Where to find your screen time',
+      guideIos: 'Settings → Screen Time → See All Activity',
+      guideAndroid: 'Settings → Digital Wellbeing → Dashboard',
+      guideSamsung: 'Settings → Digital Wellbeing → Your goals',
+      statWeek: 'wasted per week', statYear: 'wasted per year',
+      skillLabel: 'What do you want to learn?',
+      goalBtn: 'Show my progress timeline',
+    },
+    de: {
+      tagline: 'Sieh, was deine Bildschirmzeit wirklich kostet',
+      enter: 'Starten ↓',
+      nav0: '01 Bildschirmzeit', nav1: '02 Dein Jahr', nav2: '03 Dein Vergleich', nav3: '04 Was du verpasst hast', nav4: '05 Ziel setzen',
+      s1label: '01 — Deine Bildschirmzeit',
+      hoursInputLabel: 'Stunden pro Woche in sozialen Medien',
+      calcBtn: 'Berechnen',
+      guideTitle: '📱 Wo findest du deine Bildschirmzeit?',
+      guideIos: 'Einstellungen → Bildschirmzeit → Alle Aktivitäten anzeigen',
+      guideAndroid: 'Einstellungen → Digital Wellbeing → Dashboard',
+      guideSamsung: 'Einstellungen → Digital Wellbeing → Deine Ziele',
+      statWeek: 'vergeudet pro Woche', statYear: 'vergeudet pro Jahr',
+      skillLabel: 'Was möchtest du lernen?',
+      goalBtn: 'Meinen Fortschritt anzeigen',
+    }
+  };
+
+  let currentLang = 'en';
+
+  function applyLang(l) {
+    currentLang = l;
+    const t = T[l];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.dataset.i18n;
+      if (t[key] !== undefined) el.textContent = t[key];
+    });
+    document.getElementById('lang-btn').textContent = l === 'en' ? 'DE' : 'EN';
+    const inp = document.getElementById('goal-skill-input');
+    if (inp) inp.placeholder = l === 'en' ? '— choose or type a skill —' : '— Skill auswählen oder tippen —';
+    document.getElementById('hours-input').placeholder = l === 'en' ? 'e.g. 14' : 'z.B. 14';
+  }
+
+  function toggleLang() {
+    applyLang(currentLang === 'en' ? 'de' : 'en');
+  }
+
+  function toggleTheme() {
+    const isLight = document.body.classList.toggle('light');
+    document.getElementById('theme-btn').textContent = isLight ? '🌙' : '☀️';
+  }
+
+  // ── ANIMATED NUMBERS ──
+  function animateCount(el, target, suffix, duration = 900, prefix = '') {
+    const start = performance.now();
+    const isFloat = String(target).includes('.');
+    function step(now) {
+      const p = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      const val = target * ease;
+      el.textContent = prefix + (isFloat ? val.toFixed(1) : Math.round(val).toLocaleString('de-DE')) + suffix;
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // ── COMBOBOX ──
+  (function initCombo() {
+    const input    = document.getElementById('goal-skill-input');
+    const hidden   = document.getElementById('goal-skill');
+    const dropdown = document.getElementById('goal-skill-dropdown');
+    const skills   = Object.entries(skillData).map(([k, v]) => ({ key: k, name: v.name })).sort((a, b) => a.name.localeCompare(b.name));
+
+    function render(q) {
+      const filtered = q
+        ? skills.filter(s => s.name.toLowerCase().includes(q.toLowerCase()))
+        : skills;
+      dropdown.innerHTML = filtered.length
+        ? filtered.map(s => `<div class="combo-option" data-key="${s.key}">${s.name}</div>`).join('')
+        : `<div class="combo-option muted">No skill found</div>`;
+      dropdown.querySelectorAll('.combo-option[data-key]').forEach(el => {
+        el.addEventListener('mousedown', e => {
+          e.preventDefault();
+          hidden.value  = el.dataset.key;
+          input.value   = el.textContent;
+          dropdown.classList.remove('open');
+        });
+      });
+    }
+
+    input.addEventListener('focus', () => { render(input.value); dropdown.classList.add('open'); });
+    input.addEventListener('input', () => { hidden.value = ''; render(input.value); dropdown.classList.add('open'); });
+    input.addEventListener('blur',  () => { setTimeout(() => dropdown.classList.remove('open'), 150); });
+    render('');
+  })();
+
+  // ── CLOCK ──
+  function updateClock() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    document.getElementById('clock-h').textContent = pad(now.getHours());
+    document.getElementById('clock-m').textContent = pad(now.getMinutes());
+    document.getElementById('clock-s').textContent = pad(now.getSeconds());
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ── LANDING ──
+  function enterSite() {
+    const landing = document.getElementById('landing');
+    landing.classList.add('out');
+    setTimeout(() => {
+      landing.style.display = 'none';
+      document.getElementById('main-nav').style.display = 'block';
+      document.getElementById('main-wrap').style.display = 'block';
+    }, 600);
+  }
+
+  // ── NAV ──
+  function navTo(id) {
+    // make sure target section is visible
+    if (id === 'section-2') show('pie-section');
+    if (id === 'section-3') show('compare-section');
+    if (id === 'section-4') show('results-section');
+    if (id === 'section-5') show('goal-section');
+
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 60);
+
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    document.querySelector('.nav-logo').classList.remove('active');
+    if (id === 'section-1') {
+      document.querySelector('.nav-logo').classList.add('active');
+    } else {
+      const idx = ['section-2','section-3','section-4','section-5'].indexOf(id);
+      document.querySelectorAll('.nav-link')[idx]?.classList.add('active');
+    }
+  }
+</script>
+</body>
+</html>
