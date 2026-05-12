@@ -1366,19 +1366,100 @@
 
   function shareStats(hrs, money) {
     const yearly = hrs * 52;
-    const text = `I spend ${hrs}h/week on social media — that's ${yearly}h a year and ~€${money.toLocaleString()} I could have earned. See what YOU could have done instead 👇`;
-    if (navigator.share) {
-      navigator.share({ title: 'TimeWasted', text, url: window.location.href }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(text).then(() => {
+    const caption = `I waste ${hrs}h/week on social media — ${yearly}h a year & ~€${money.toLocaleString()} lost. What could YOU have done instead?\n👉 jisballin.github.io/TimeWasted/`;
+
+    generateShareImage(hrs, yearly, money).then(blob => {
+      const file = new File([blob], 'timewasted.png', { type: 'image/png' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], text: caption }).catch(() => fallbackShare(caption));
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'timewasted.png';
+        a.click();
+        URL.revokeObjectURL(url);
+        navigator.clipboard.writeText(caption).catch(() => {});
         const btn = document.querySelector('.share-btn');
         const orig = btn.innerHTML;
-        btn.innerHTML = '✓ Copied to clipboard!';
+        btn.innerHTML = '✓ Image saved!';
         btn.style.color = 'var(--accent)';
         btn.style.borderColor = 'var(--accent)';
-        setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
+        setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; btn.style.borderColor = ''; }, 2500);
+      }
+    });
+  }
+
+  function fallbackShare(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.share-btn');
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✓ Copied!';
+      btn.style.color = 'var(--accent)';
+      btn.style.borderColor = 'var(--accent)';
+      setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
+    });
+  }
+
+  function generateShareImage(hrs, yearly, money) {
+    return new Promise(resolve => {
+      const W = 1080, H = 1080;
+      const canvas = document.createElement('canvas');
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      // background
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, W, H);
+
+      // accent border
+      ctx.strokeStyle = '#c8f135';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(40, 40, W - 80, H - 80);
+
+      // title
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 72px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('Time', 100, 200);
+      ctx.fillStyle = '#c8f135';
+      ctx.font = 'bold 96px sans-serif';
+      ctx.fillText('Wasted.', 100, 310);
+
+      // divider
+      ctx.strokeStyle = '#1a1a1a';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(100, 360);
+      ctx.lineTo(W - 100, 360);
+      ctx.stroke();
+
+      // stat blocks
+      const stats = [
+        { label: 'PER WEEK', value: `${hrs}h` },
+        { label: 'PER YEAR', value: `${yearly}h` },
+        { label: 'MONEY LOST', value: `€${money.toLocaleString()}` },
+      ];
+
+      stats.forEach((s, i) => {
+        const y = 430 + i * 170;
+        ctx.fillStyle = '#888882';
+        ctx.font = '32px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(s.label, 100, y);
+        ctx.fillStyle = '#c8f135';
+        ctx.font = 'bold 80px sans-serif';
+        ctx.fillText(s.value, 100, y + 80);
       });
-    }
+
+      // bottom text
+      ctx.fillStyle = '#888882';
+      ctx.font = '28px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('jisballin.github.io/TimeWasted/', W / 2, H - 80);
+
+      canvas.toBlob(blob => resolve(blob), 'image/png');
+    });
   }
 
   function getBestLevel(alt, hrs) {
